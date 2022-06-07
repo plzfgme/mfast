@@ -2,6 +2,7 @@ package mfast
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 
 	"github.com/fentec-project/gofe/abe"
@@ -15,16 +16,24 @@ type Server struct {
 }
 
 type ServerConfig struct {
-	storePath string
+	StorePath string
 }
 
 func NewServer(config *ServerConfig) (*Server, error) {
-	indexDBPath := filepath.Join(config.storePath, "index.db")
+	if stat, err := os.Stat(config.StorePath); os.IsNotExist(err) {
+		err := os.MkdirAll(config.StorePath, 0755)
+		if err != nil {
+			return nil, err
+		}
+	} else if !stat.IsDir() {
+		return nil, NonDirFileError
+	}
+	indexDBPath := filepath.Join(config.StorePath, "index.db")
 	indexDB, err := badgerwrap.Open(indexDBPath)
 	if err != nil {
 		return nil, err
 	}
-	eMapDBPath := filepath.Join(config.storePath, "emap.db")
+	eMapDBPath := filepath.Join(config.StorePath, "emap.db")
 	eMapDB, err := badgerwrap.Open(eMapDBPath)
 	if err != nil {
 		return nil, err
@@ -65,6 +74,7 @@ func (server *Server) PreSearch(tkn *PreSearchToken) (*abe.FAMECipher, error) {
 	return EC, nil
 }
 
+// TODO error handle
 func (server *Server) Search(tkn *SearchToken) ([]string, error) {
 	ids := make(map[string]struct{})
 	delta := make(map[string]struct{})
@@ -74,6 +84,8 @@ func (server *Server) Search(tkn *SearchToken) ([]string, error) {
 		e, err := server.indexDB.Get(u)
 		if err != nil {
 			return nil, err
+		} else if e == nil {
+			return nil, nil
 		}
 		ePart2 := h2(append(tkn.TW, stI...))
 		for len(ePart2) < len(e) {

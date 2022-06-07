@@ -15,17 +15,17 @@ type Searcher struct {
 }
 
 type SearcherConfig struct {
-	setList []string
-	keys    *DelegatedKeys
+	SetList []string
+	Keys    *DelegatedKeys
 }
 
 func NewSearcher(config *SearcherConfig) *Searcher {
-	scPRF := scprf.NewSCPRF(config.setList)
+	scPRF := scprf.NewSCPRF(config.SetList)
 	aBE := abe.NewFAME()
 	return &Searcher{
 		scPRF: scPRF,
 		aBE:   aBE,
-		keys:  config.keys,
+		keys:  config.Keys,
 	}
 }
 

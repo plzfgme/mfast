@@ -16,9 +16,9 @@ import (
 )
 
 type ownerKeys struct {
-	scPRFK []byte
-	abePK  *abe.FAMEPubKey
-	abeSK  *abe.FAMESecKey
+	SCPRFK []byte
+	ABEPK  *abe.FAMEPubKey
+	ABESK  *abe.FAMESecKey
 }
 
 type Owner struct {
@@ -49,33 +49,33 @@ func (st *UpdateState) GetVal() []byte {
 }
 
 type OwnerConfig struct {
-	storePath string
-	setList   []string
+	StorePath string
+	SetList   []string
 }
 
 var NonDirFileError = fmt.Errorf("mfast: store path exists and is not a directory.")
 
 func NewOwner(config *OwnerConfig) (*Owner, error) {
-	if stat, err := os.Stat(config.storePath); os.IsNotExist(err) {
-		err := os.MkdirAll(config.storePath, 0755)
+	if stat, err := os.Stat(config.StorePath); os.IsNotExist(err) {
+		err := os.MkdirAll(config.StorePath, 0755)
 		if err != nil {
 			return nil, err
 		}
 	} else if !stat.IsDir() {
 		return nil, NonDirFileError
 	}
-	db, err := badgerwrap.Open(filepath.Join(config.storePath, "localmap.db"))
+	db, err := badgerwrap.Open(filepath.Join(config.StorePath, "localmap.db"))
 	if err != nil {
 		return nil, err
 	}
 	abeCipher := abe.NewFAME()
 
 	keys := &ownerKeys{}
-	keysPath := filepath.Join(config.storePath, "keys")
+	keysPath := filepath.Join(config.StorePath, "keys")
 	if _, err := os.Stat(keysPath); os.IsNotExist(err) {
-		keys.scPRFK = make([]byte, 32)
-		rand.Read(keys.scPRFK)
-		keys.abePK, keys.abeSK, err = abeCipher.GenerateMasterKeys()
+		keys.SCPRFK = make([]byte, 32)
+		rand.Read(keys.SCPRFK)
+		keys.ABEPK, keys.ABESK, err = abeCipher.GenerateMasterKeys()
 		if err != nil {
 			return nil, err
 		}
@@ -83,6 +83,7 @@ func NewOwner(config *OwnerConfig) (*Owner, error) {
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("jsonKeys: %v\n", jsonKeys)
 		err = os.WriteFile(keysPath, jsonKeys, 0600)
 		if err != nil {
 			return nil, err
@@ -101,14 +102,15 @@ func NewOwner(config *OwnerConfig) (*Owner, error) {
 	return &Owner{
 		db:      db,
 		keys:    keys,
-		scPRF:   scprf.NewSCPRF(config.setList),
+		scPRF:   scprf.NewSCPRF(config.SetList),
 		aBE:     abeCipher,
-		setList: config.setList,
+		setList: config.SetList,
 	}, nil
 }
 
-func (owner *Owner) GenUpdateTkn(id []byte, set string, w []byte, op string) (*UpdateToken, error) {
-	tW := owner.scPRF.EvalMK(owner.keys.scPRFK, set, h(w))
+func (owner *Owner) GenUpdateTkn(id string, set string, w []byte, op string) (*UpdateToken, error) {
+	bytesId := []byte(id)
+	tW := owner.scPRF.EvalMK(owner.keys.SCPRFK, set, h(w))
 	rawStCC, err := owner.db.Get(w)
 	if err != nil {
 		return nil, err
@@ -142,7 +144,7 @@ func (owner *Owner) GenUpdateTkn(id []byte, set string, w []byte, op string) (*U
 	} else {
 		bytesOP[0] = byte(1)
 	}
-	ePart1 := append(append(bytesOP, kCPlus1...), id...)
+	ePart1 := append(append(bytesOP, kCPlus1...), bytesId...)
 	ePart2 := h2(append(tW, stCPlus1...))
 	for len(ePart2) < len(ePart1) {
 		ePart2 = append(ePart2, ePart2[:32]...)
@@ -155,7 +157,7 @@ func (owner *Owner) GenUpdateTkn(id []byte, set string, w []byte, op string) (*U
 	if err != nil {
 		return nil, err
 	}
-	ec, err := owner.aBE.Encrypt(hex.EncodeToString(newMapV), msp, owner.keys.abePK)
+	ec, err := owner.aBE.Encrypt(hex.EncodeToString(newMapV), msp, owner.keys.ABEPK)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +171,7 @@ func (owner *Owner) GenUpdateTkn(id []byte, set string, w []byte, op string) (*U
 }
 
 func (owner *Owner) GenSearchTkn(set string, w []byte) (*SearchToken, error) {
-	tW := owner.scPRF.EvalMK(owner.keys.scPRFK, set, h(w))
+	tW := owner.scPRF.EvalMK(owner.keys.SCPRFK, set, h(w))
 	rawStCC, err := owner.db.Get(w)
 	if err != nil {
 		return nil, err
@@ -188,14 +190,14 @@ func (owner *Owner) GenSearchTkn(set string, w []byte) (*SearchToken, error) {
 }
 
 func (owner *Owner) DelegateKeys(set string) (*DelegatedKeys, error) {
-	abeAttrK, err := owner.aBE.GenerateAttribKeys(owner.setList, owner.keys.abeSK)
+	abeAttrK, err := owner.aBE.GenerateAttribKeys(owner.setList, owner.keys.ABESK)
 	if err != nil {
 		return nil, err
 	}
 	return &DelegatedKeys{
-		SCPRFCK:  owner.scPRF.Constrain(owner.keys.scPRFK, set),
+		SCPRFCK:  owner.scPRF.Constrain(owner.keys.SCPRFK, set),
 		ABEAttrK: abeAttrK,
-		ABEPK:    owner.keys.abePK,
+		ABEPK:    owner.keys.ABEPK,
 	}, nil
 }
 
