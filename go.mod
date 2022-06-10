@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/lukechampine/fastxor v0.0.0-20210322201628-b664bed5a5cc
-	github.com/plzfgme/consprf v0.0.0-20220605024443-e84130b24ece
+	github.com/plzfgme/consprf v0.0.0-20220610045958-9b1b5585a380
 )
 
 require (
