@@ -109,7 +109,7 @@ func NewOwner(config *OwnerConfig) (*Owner, error) {
 
 func (owner *Owner) GenUpdateTkn(id string, set string, w []byte, op string) (*UpdateToken, error) {
 	bytesId := []byte(id)
-	tW := owner.scPRF.EvalMK(owner.keys.SCPRFK, set, h(w))
+	tW := owner.scPRF.EvalMK(owner.keys.SCPRFK, set, h([]byte(set+":"+string(w))))
 	rawStCC, err := owner.db.Get(w)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (owner *Owner) GenUpdateTkn(id string, set string, w []byte, op string) (*U
 }
 
 func (owner *Owner) GenSearchTkn(set string, w []byte) (*SearchToken, error) {
-	tW := owner.scPRF.EvalMK(owner.keys.SCPRFK, set, h(w))
+	tW := owner.scPRF.EvalMK(owner.keys.SCPRFK, set, h([]byte(set+":"+string(w))))
 	rawStCC, err := owner.db.Get(w)
 	if err != nil {
 		return nil, err

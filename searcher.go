@@ -31,12 +31,12 @@ func NewSearcher(config *SearcherConfig) *Searcher {
 
 func (searcher *Searcher) GenPreSearchTkn(set string, w []byte) *PreSearchToken {
 	return &PreSearchToken{
-		TW: searcher.scPRF.EvalCK(searcher.keys.SCPRFCK, set, h(w)),
+		TW: searcher.scPRF.EvalCK(searcher.keys.SCPRFCK, set, h([]byte(set+":"+string(w)))),
 	}
 }
 
 func (searcher *Searcher) GenSearchTkn(set string, w []byte, preSearchResult *abe.FAMECipher) (*SearchToken, error) {
-	tW := searcher.scPRF.EvalCK(searcher.keys.SCPRFCK, set, h(w))
+	tW := searcher.scPRF.EvalCK(searcher.keys.SCPRFCK, set, h([]byte(set+":"+string(w))))
 	hexRawStCC, err := searcher.aBE.Decrypt(preSearchResult, searcher.keys.ABEAttrK, searcher.keys.ABEPK)
 	rawStCC, err := hex.DecodeString(hexRawStCC)
 	if err != nil {
