@@ -66,6 +66,9 @@ func (server *Server) PreSearch(tkn *PreSearchToken) (*abe.FAMECipher, error) {
 	if err != nil {
 		return nil, err
 	}
+	if jsonEC == nil {
+		return nil, nil
+	}
 	EC := &abe.FAMECipher{}
 	err = json.Unmarshal(jsonEC, EC)
 	if err != nil {
