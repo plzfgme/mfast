@@ -83,7 +83,6 @@ func NewOwner(config *OwnerConfig) (*Owner, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("jsonKeys: %v\n", jsonKeys)
 		err = os.WriteFile(keysPath, jsonKeys, 0600)
 		if err != nil {
 			return nil, err
