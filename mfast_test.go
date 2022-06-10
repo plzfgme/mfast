@@ -26,7 +26,8 @@ func TestMFAST(t *testing.T) {
 		SetList: setList,
 		Keys:    dKeys,
 	})
-	updTkn, err := owner.GenUpdateTkn("101", "CPart", []byte("hello"), "add")
+
+	updTkn, err := owner.GenUpdateTkn("131", "CPart", []byte("hello"), "add")
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,7 +35,7 @@ func TestMFAST(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	updTkn, err = owner.GenUpdateTkn("131", "CPart", []byte("gyt"), "add")
+	updTkn, err = owner.GenUpdateTkn("101", "APart", []byte("lo"), "add")
 	if err != nil {
 		t.Error(err)
 	}
@@ -42,12 +43,12 @@ func TestMFAST(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	psrhTkn := searcher.GenPreSearchTkn("CPart", []byte("gyt"))
+	psrhTkn := searcher.GenPreSearchTkn("CPart", []byte("hello"))
 	psrhRes, err := server.PreSearch(psrhTkn)
 	if err != nil {
 		t.Error(err)
 	}
-	srhTkn, err := searcher.GenSearchTkn("CPart", []byte("gyt"), psrhRes)
+	srhTkn, err := searcher.GenSearchTkn("CPart", []byte("hello"), psrhRes)
 	if err != nil {
 		t.Error(err)
 	}
